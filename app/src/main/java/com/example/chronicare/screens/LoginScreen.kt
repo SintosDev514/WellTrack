@@ -1,122 +1,208 @@
 package com.example.chronicare.screens
 
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.chronicare.screens.AuthViewModel
- // Make sure this import is correct
 
 @Composable
 fun LoginScreen(
     navController: NavController,
     authViewModel: AuthViewModel = viewModel()
 ) {
-    // State for the text fields
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-
-    // State for loading and error messages
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
 
-    Column(
+    // Brand colors
+    val primaryGreen = Color(0xFF10B981)
+    val mutedText = Color(0xFF6B7280)
+    val backgroundColor = Color(0xFFF9FAFB)
+
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+            .background(backgroundColor)
+            .padding(horizontal = 24.dp),
+        contentAlignment = Alignment.Center
     ) {
-        Text(text = "Welcome Back", style = MaterialTheme.typography.headlineMedium)
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
-            label = { Text("Email") },
+        Column(
             modifier = Modifier.fillMaxWidth(),
-            isError = errorMessage != null
-        )
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("Password") },
-            modifier = Modifier.fillMaxWidth(),
-            visualTransformation = PasswordVisualTransformation(),
-            isError = errorMessage != null
-        )
-
-        // Display error message if login fails
-        errorMessage?.let {
-            Spacer(modifier = Modifier.height(8.dp))
+            // App Branding (CENTERED)
             Text(
-                text = it,
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall
+                text = "WellTrack",
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = primaryGreen
+                ),
+                textAlign = TextAlign.Center
             )
-        }
 
-        Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
-        Button(
-            onClick = {
-                if (email.isNotBlank() && password.isNotBlank()) {
-                    isLoading = true
-                    errorMessage = null // Clear previous errors
-                    authViewModel.signIn(email, password,
-                        onSuccess = {
-                            isLoading = false
-                            // Navigate to the home/main screen after successful login
-                            navController.navigate("home") { // Assuming "home" is your main screen route
-                                // Clear the entire back stack up to the graph's start destination
-                                popUpTo(navController.graph.startDestinationId) {
-                                    inclusive = true
-                                }
-                                // Avoid creating multiple copies of the home screen
-                                launchSingleTop = true
+            Text(
+                text = "Your daily health companion",
+                style = MaterialTheme.typography.bodyMedium,
+                color = mutedText,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(40.dp))
+
+            // Login Card
+            Surface(
+                shape = RoundedCornerShape(20.dp),
+                tonalElevation = 6.dp,
+                shadowElevation = 6.dp,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(18.dp)
+                ) {
+
+                    Text(
+                        text = "Sign in",
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
+
+                    Text(
+                        text = "Access your health dashboard",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = mutedText
+                    )
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    // Email
+                    OutlinedTextField(
+                        value = email,
+                        onValueChange = { email = it },
+                        label = { Text("Email address") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = TextFieldDefaults.colors(
+                            focusedIndicatorColor = primaryGreen,
+                            cursorColor = primaryGreen,
+                            focusedLabelColor = primaryGreen
+                        )
+                    )
+
+                    // Password
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = { password = it },
+                        label = { Text("Password") },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = TextFieldDefaults.colors(
+                            focusedIndicatorColor = primaryGreen,
+                            cursorColor = primaryGreen,
+                            focusedLabelColor = primaryGreen
+                        )
+                    )
+
+                    // Error message
+                    errorMessage?.let {
+                        Text(
+                            text = it,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Login Button
+                    Button(
+                        onClick = {
+                            if (email.isNotBlank() && password.isNotBlank()) {
+                                isLoading = true
+                                errorMessage = null
+                                authViewModel.signIn(
+                                    email,
+                                    password,
+                                    onSuccess = {
+                                        isLoading = false
+                                        navController.navigate("home") {
+                                            popUpTo(navController.graph.startDestinationId) {
+                                                inclusive = true
+                                            }
+                                            launchSingleTop = true
+                                        }
+                                    },
+                                    onFailure = { error ->
+                                        isLoading = false
+                                        errorMessage = error
+                                        Toast.makeText(context, error, Toast.LENGTH_LONG).show()
+                                    }
+                                )
                             }
                         },
-                        onFailure = { error ->
-                            isLoading = false
-                            errorMessage = error // Show Firebase error to the user
-                            // Optional: Show a toast for a more transient message
-                            Toast.makeText(context, error, Toast.LENGTH_LONG).show()
+                        enabled = email.isNotBlank() && password.isNotBlank() && !isLoading,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(54.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = primaryGreen)
+                    ) {
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                color = Color.White,
+                                strokeWidth = 2.dp,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        } else {
+                            Text(
+                                text = "Continue",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Medium
+                            )
                         }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Footer (CENTERED)
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "New to WellTrack?",
+                    color = mutedText
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                TextButton(onClick = { navController.navigate("signup") }) {
+                    Text(
+                        text = "Create account",
+                        color = primaryGreen,
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
-            },
-            // Disable button if fields are empty or if loading
-            enabled = email.isNotBlank() && password.isNotBlank() && !isLoading,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            if (isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    color = MaterialTheme.colorScheme.onPrimary
-                )
-            } else {
-                Text("Log In")
             }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        TextButton(onClick = { navController.navigate("signup") }) { // Assuming "signup" is your route
-            Text("Don't have an account? Sign Up")
         }
     }
 }

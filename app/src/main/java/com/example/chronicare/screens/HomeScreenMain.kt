@@ -42,7 +42,7 @@ val drawerItems = listOf(
     DrawerItem("Medication & Treatment Reminder", NavRoutes.MedicationReminder.route, Icons.Filled.LocalPharmacy),
     DrawerItem("Daily Health Tracker", NavRoutes.HydrationAndSleepTrackerScreen.route, Icons.Filled.AccessTime),
     DrawerItem("Progress Tracking", NavRoutes.ProgressTracking.route, Icons.Filled.ShowChart),
-    DrawerItem("Setting & Preferences", NavRoutes.Settings.route, Icons.Filled.Settings)
+  //  DrawerItem("Setting & Preferences", NavRoutes.Settings.route, Icons.Filled.Settings)
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -91,7 +91,7 @@ fun DrawerApp(mainNavController: NavController, sharedData: SharedData) {
                                 modifier = Modifier.size(40.dp).padding(end = 8.dp)
                             )
                             Text(
-                                text = "Chronic Care Wellness Tracker",
+                                text = "WellTrack",
                                 color = Color.White,
                                 style = MaterialTheme.typography.titleMedium
                             )
@@ -142,6 +142,6 @@ fun NavigationHost(
         composable(NavRoutes.MedicationReminder.route) { MedicationTreatmentReminderScreen(sharedData = sharedData) }
         composable(NavRoutes.ProgressTracking.route) { ProgressTrackingScreen() }
         composable(NavRoutes.HydrationAndSleepTrackerScreen.route) { HealthTrackingApp(navController, sharedData) }
-        composable(NavRoutes.Settings.route) { SettingsPreferences(navController, sharedData) }
+       // composable(NavRoutes.Settings.route) { SettingsPreferences(navController, sharedData) }
     }
 }
