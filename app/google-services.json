@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "929264044142",
+    "project_id": "welltrack-969d3",
+    "storage_bucket": "welltrack-969d3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:929264044142:android:e85520c62942620de7fe7f",
+        "android_client_info": {
+          "package_name": "com.example.chronicare"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCykBwT46QH0ZMdQA1Y5i3jNZRirZjuzps"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

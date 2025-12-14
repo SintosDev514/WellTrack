@@ -1,0 +1,58 @@
+@Composable
+fun HomeScreen(onMenuClick: () -> Unit) {
+    val scrollState = rememberScrollState()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+            .verticalScroll(scrollState)
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Header Section: Profile Picture & Greeting
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 24.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            //hamburger
+
+            IconButton(onClick = onMenuClick) {
+                Icon(
+                    imageVector = Icons.Default.Menu,
+                    contentDescription = "Menu"
+                )
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Image(
+                painter = painterResource(id = R.drawable.logo), // Replace with user profile image
+                contentDescription = "Profile Picture",
+                modifier = Modifier
+                    .size(60.dp)
+
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column {
+                Text(
+                    text = "Hello, User",
+                    fontSize = 20.sp,
+                    color = Color.Black,
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = "Your Dashboard",
+                    fontSize = 14.sp,
+                    color = Color.Gray
+                )
+            }
+        }
+
+        //CARDS FOR OUR DASHBOARD NIYAN KA
+
+    }
+}

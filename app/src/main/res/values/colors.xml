@@ -1,0 +1,19 @@
+<resources>
+    <!-- Existing colors -->
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+
+    <color name="purple_80">#7F56D9</color>
+    <color name="purple_grey_80">#6C5B8A</color>
+    <color name="pink_80">#F1A7C1</color>
+
+    <color name="purple_40">#AB6DE7</color>
+    <color name="purple_grey_40">#9F8C9A</color>
+    <color name="pink_40">#F28C8A</color>
+</resources>
