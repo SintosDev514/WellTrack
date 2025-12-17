@@ -1,5 +1,7 @@
 package com.example.chronicare.homeScreens
 
+import androidx.compose.material.icons.filled.SportsBar
+import androidx.compose.material.icons.outlined.SportsBar
 import android.Manifest
 import android.content.Intent
 import android.os.Build
@@ -12,9 +14,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocalDrink
+import androidx.compose.material.icons.filled.Opacity
+import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material.icons.outlined.LocalDrink
+import androidx.compose.material.icons.outlined.WaterDrop
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -39,7 +45,31 @@ fun HealthTrackingApp(
 
     val sleepGoal = 8f
     val waterGoal = 2000f
-    val glassSize = 250f
+
+    // 💧 DIFFERENT WATER ICON AMOUNTS
+    val waterGlasses = listOf(
+        WaterGlass( // Small cup
+            emptyIcon = Icons.Outlined.LocalDrink,
+            filledIcon = Icons.Filled.LocalDrink,
+            amount = 150f
+        ),
+        WaterGlass( // Glass cup
+            emptyIcon = Icons.Outlined.LocalDrink,
+            filledIcon = Icons.Filled.LocalDrink,
+            amount = 250f
+        ),
+        WaterGlass( // Plastic bottle
+            emptyIcon = Icons.Outlined.LocalDrink,
+            filledIcon = Icons.Filled.Opacity,
+            amount = 350f
+        ),
+        WaterGlass( // Large bottle
+            emptyIcon = Icons.Outlined.SportsBar,
+            filledIcon = Icons.Filled.SportsBar,
+            amount = 500f
+        )
+    )
+
 
     val context = LocalContext.current
     val accentColor = Color(0xFF007F7A)
@@ -67,10 +97,7 @@ fun HealthTrackingApp(
 
     // ---------------- UI ----------------
     ChroniCareTheme {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
-        ) {
+        Surface(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier
                     .padding(20.dp)
@@ -79,10 +106,9 @@ fun HealthTrackingApp(
             ) {
 
                 Text(
-                    text = "Daily Health Tracker",
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
+                    "Daily Health Tracker",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
                     color = accentColor
                 )
 
@@ -97,22 +123,10 @@ fun HealthTrackingApp(
                     onInputChange = { sleepInput = it },
                     buttonLabel = "Log Sleep",
                     onButtonClick = {
-                        val value = sleepInput.toFloatOrNull()
-                        if (value != null && value >= 0) {
-                            currentSleep = value
-                            sharedData.saveSleepData(value)
+                        sleepInput.toFloatOrNull()?.let {
+                            currentSleep = it
+                            sharedData.saveSleepData(it)
                             sleepInput = ""
-                            Toast.makeText(
-                                context,
-                                "Sleep logged: $value hrs",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        } else {
-                            Toast.makeText(
-                                context,
-                                "Invalid sleep hours",
-                                Toast.LENGTH_SHORT
-                            ).show()
                         }
                     },
                     inputLabel = "Enter sleep hours"
@@ -128,11 +142,11 @@ fun HealthTrackingApp(
                         modifier = Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
+
                         Text(
                             "Water Intake Tracker",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.SemiBold
-                            )
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
                         )
 
                         LinearProgressIndicator(
@@ -153,11 +167,16 @@ fun HealthTrackingApp(
                         WaterGlassesRow(
                             currentWater = currentWater,
                             waterGoal = waterGoal,
-                            glassSize = glassSize
-                        ) {
+                            waterGlasses = waterGlasses
+                        ) { amount ->
                             currentWater =
-                                (currentWater + glassSize).coerceAtMost(waterGoal)
-                            sharedData.addWaterData(glassSize)
+                                (currentWater + amount).coerceAtMost(waterGoal)
+                            sharedData.addWaterData(amount)
+                            Toast.makeText(
+                                context,
+                                "Added ${amount.toInt()} ml",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
                     }
                 }
@@ -172,19 +191,8 @@ fun HealthTrackingApp(
                         modifier = Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Text(
-                            "Step Tracker",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        )
 
-                        Text(
-                            if (isStepTracking)
-                                "Step counter is running"
-                            else
-                                "Tap to start counting steps"
-                        )
+                        Text("Step Tracker", fontWeight = FontWeight.SemiBold)
 
                         Button(
                             onClick = {
@@ -227,35 +235,54 @@ fun HealthTrackingApp(
     }
 }
 
-/* ---------------- HELPERS ---------------- */
+/* ---------------- WATER MODEL ---------------- */
+
+data class WaterGlass(
+    val emptyIcon: androidx.compose.ui.graphics.vector.ImageVector,
+    val filledIcon: androidx.compose.ui.graphics.vector.ImageVector,
+    val amount: Float
+)
+
+/* ---------------- WATER ROW ---------------- */
 
 @Composable
 fun WaterGlassesRow(
     currentWater: Float,
     waterGoal: Float,
-    glassSize: Float,
-    onGlassClick: () -> Unit
+    waterGlasses: List<WaterGlass>,
+    onGlassClick: (Float) -> Unit
 ) {
-    val total = (waterGoal / glassSize).toInt()
-    val filled = (currentWater / glassSize).toInt()
+    var consumed = 0f
 
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        repeat(total) { index ->
-            IconButton(onClick = onGlassClick) {
-                Icon(
-                    imageVector =
-                        if (index < filled) Icons.Filled.LocalDrink
-                        else Icons.Outlined.LocalDrink,
-                    contentDescription = "Water glass",
-                    tint =
-                        if (index < filled) Color(0xFF007F7A)
-                        else Color.Gray,
-                    modifier = Modifier.size(40.dp)
+    Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
+        waterGlasses.forEach { glass ->
+            val isFilled = currentWater >= consumed + glass.amount
+            consumed += glass.amount
+
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                IconButton(onClick = { onGlassClick(glass.amount) }) {
+                    Icon(
+                        imageVector =
+                            if (isFilled) glass.filledIcon
+                            else glass.emptyIcon,
+                        contentDescription = "Water",
+                        tint =
+                            if (isFilled) Color(0xFF007F7A)
+                            else Color.Gray,
+                        modifier = Modifier.size(42.dp)
+                    )
+                }
+
+                Text(
+                    "${glass.amount.toInt()} ml",
+                    style = MaterialTheme.typography.labelSmall
                 )
             }
         }
     }
 }
+
+/* ---------------- TRACKER CARD ---------------- */
 
 @Composable
 fun TrackerCard(
@@ -284,9 +311,7 @@ fun TrackerCard(
 
             LinearProgressIndicator(
                 progress = progress.coerceIn(0f, 1f),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(8.dp),
+                modifier = Modifier.fillMaxWidth(),
                 color = progressColor
             )
 
@@ -303,9 +328,7 @@ fun TrackerCard(
             Button(
                 onClick = onButtonClick,
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = progressColor
-                )
+                colors = ButtonDefaults.buttonColors(containerColor = progressColor)
             ) {
                 Text(buttonLabel, color = Color.White)
             }
