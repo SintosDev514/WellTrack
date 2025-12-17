@@ -1,20 +1,20 @@
 package com.example.chronicare.homeScreens
 
-import android.Manifest // <-- ADDED
-import android.content.Intent // <-- ADDED
-import android.os.Build // <-- ADDED
+import android.Manifest
+import android.content.Intent
+import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocalDrink
 import androidx.compose.material.icons.outlined.LocalDrink
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -23,46 +23,49 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.chronicare.screens.SharedData
-import com.example.chronicare.ui.theme.ChroniCareTheme
 import com.example.chronicare.services.StepCounterService
-import androidx.compose.foundation.rememberScrollState // Already have this
-import androidx.compose.foundation.verticalScroll // <-- ADD THIS LINE
-
-
+import com.example.chronicare.ui.theme.ChroniCareTheme
 
 @Composable
-fun HealthTrackingApp(navController: NavController, sharedData: SharedData) {
-
+fun HealthTrackingApp(
+    navController: NavController,
+    sharedData: SharedData
+) {
+    // ---------------- STATE ----------------
     var sleepInput by remember { mutableStateOf("") }
-    var currentSleep by remember { mutableStateOf(0.0f) }
-
+    var currentSleep by remember { mutableStateOf(0f) }
     var currentWater by remember { mutableStateOf(0f) }
+    var isStepTracking by remember { mutableStateOf(false) }
 
     val sleepGoal = 8f
     val waterGoal = 2000f
-    val glassSize = 250f // per glass
+    val glassSize = 250f
 
-    val context = LocalContext.current // <-- FIXED: Only one instance now
+    val context = LocalContext.current
     val accentColor = Color(0xFF007F7A)
 
-    // 1. Create a permission launcher for Activity Recognition
+    // ---------------- PERMISSION ----------------
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted: Boolean ->
+    ) { isGranted ->
         if (isGranted) {
-            // Permission granted, start the service
-            val serviceIntent = Intent(context, StepCounterService::class.java)
+            val intent = Intent(context, StepCounterService::class.java)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(serviceIntent)
+                context.startForegroundService(intent)
             } else {
-                context.startService(serviceIntent)
+                context.startService(intent)
             }
+            isStepTracking = true
         } else {
-            // Permission denied
-            Toast.makeText(context, "Activity Recognition permission is required to track steps.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                context,
+                "Activity Recognition permission required",
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
+    // ---------------- UI ----------------
     ChroniCareTheme {
         Surface(
             modifier = Modifier.fillMaxSize(),
@@ -70,66 +73,68 @@ fun HealthTrackingApp(navController: NavController, sharedData: SharedData) {
         ) {
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
                     .padding(20.dp)
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
+
                 Text(
                     text = "Daily Health Tracker",
-                    style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-                    color = accentColor,
-                    modifier = Modifier.padding(vertical = 8.dp)
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = accentColor
                 )
 
-                // ---------------------------
-                // SLEEP TRACKER
-                // ---------------------------
+                // ---------------- SLEEP TRACKER ----------------
                 TrackerCard(
                     title = "Sleep Tracker",
                     goalText = "Goal: 8 hours",
-                    currentValueText = "Current: ${currentSleep} hrs",
+                    currentValueText = "Current: $currentSleep hrs",
                     progress = currentSleep / sleepGoal,
                     progressColor = accentColor,
                     inputValue = sleepInput,
                     onInputChange = { sleepInput = it },
                     buttonLabel = "Log Sleep",
                     onButtonClick = {
-                        val sleepHours = sleepInput.toFloatOrNull()
-                        if (sleepHours != null && sleepHours >= 0) {
-                            currentSleep = sleepHours
-                            sharedData.saveSleepData(sleepHours)
-                            Toast.makeText(context, "Sleep logged: $sleepHours hours", Toast.LENGTH_SHORT).show()
+                        val value = sleepInput.toFloatOrNull()
+                        if (value != null && value >= 0) {
+                            currentSleep = value
+                            sharedData.saveSleepData(value)
                             sleepInput = ""
+                            Toast.makeText(
+                                context,
+                                "Sleep logged: $value hrs",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         } else {
-                            Toast.makeText(context, "Enter valid sleep hours", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                context,
+                                "Invalid sleep hours",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
                     },
                     inputLabel = "Enter sleep hours"
                 )
 
-                // ---------------------------
-                // WATER TRACKER (GLASS ICON VERSION)
-                // ---------------------------
+                // ---------------- WATER TRACKER ----------------
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                     shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+                    elevation = CardDefaults.cardElevation(6.dp)
                 ) {
                     Column(
                         modifier = Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
-                            text = "Water Intake Tracker",
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                            color = MaterialTheme.colorScheme.onSurface
+                            "Water Intake Tracker",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.SemiBold
+                            )
                         )
-                        Text(
-                            text = "Goal: 2000ml (8 glasses)",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
+
                         LinearProgressIndicator(
                             progress = (currentWater / waterGoal).coerceIn(0f, 1f),
                             modifier = Modifier
@@ -138,82 +143,92 @@ fun HealthTrackingApp(navController: NavController, sharedData: SharedData) {
                                 .clip(RoundedCornerShape(4.dp)),
                             color = accentColor
                         )
+
                         Text(
-                            text = "Current: ${currentWater.toInt()} ml",
-                            style = MaterialTheme.typography.bodyLarge.copy(
-                                color = accentColor,
-                                fontWeight = FontWeight.Medium
-                            )
+                            "Current: ${currentWater.toInt()} ml",
+                            color = accentColor,
+                            fontWeight = FontWeight.Medium
                         )
-                        // GLASS ICONS ROW
+
                         WaterGlassesRow(
                             currentWater = currentWater,
                             waterGoal = waterGoal,
-                            glassSize = glassSize,
-                            onGlassClick = {
-                                val newAmount = (currentWater + glassSize).coerceAtMost(waterGoal)
-                                currentWater = newAmount
-                                sharedData.addWaterData(glassSize)
-                                Toast.makeText(context, "Logged 250ml", Toast.LENGTH_SHORT).show()
-                            }
-                        )
+                            glassSize = glassSize
+                        ) {
+                            currentWater =
+                                (currentWater + glassSize).coerceAtMost(waterGoal)
+                            sharedData.addWaterData(glassSize)
+                        }
                     }
                 }
 
-                // ---------------------------
-// STEP TRACKER CARD
-// ---------------------------
+                // ---------------- STEP TRACKER ----------------
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                     shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+                    elevation = CardDefaults.cardElevation(6.dp)
                 ) {
                     Column(
                         modifier = Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-
                         Text(
-                            text = "Step Tracker",
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                            color = MaterialTheme.colorScheme.onSurface
+                            "Step Tracker",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.SemiBold
+                            )
                         )
 
                         Text(
-                            text = "Tap the button to start counting steps.",
-                            style = MaterialTheme.typography.bodyMedium
+                            if (isStepTracking)
+                                "Step counter is running"
+                            else
+                                "Tap to start counting steps"
                         )
 
-                        // Start Button
                         Button(
                             onClick = {
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                                    permissionLauncher.launch(Manifest.permission.ACTIVITY_RECOGNITION)
+                                val intent =
+                                    Intent(context, StepCounterService::class.java)
+
+                                if (!isStepTracking) {
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                        permissionLauncher.launch(
+                                            Manifest.permission.ACTIVITY_RECOGNITION
+                                        )
+                                    } else {
+                                        context.startService(intent)
+                                        isStepTracking = true
+                                    }
                                 } else {
-                                    val serviceIntent = Intent(context, StepCounterService::class.java)
-                                    context.startService(serviceIntent)
+                                    context.stopService(intent)
+                                    isStepTracking = false
                                 }
                             },
                             modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = accentColor)
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isStepTracking)
+                                    Color.Red
+                                else accentColor
+                            )
                         ) {
-                            Text("Start Step Tracking", color = Color.White)
+                            Text(
+                                if (isStepTracking)
+                                    "Stop Step Tracking"
+                                else
+                                    "Start Step Tracking",
+                                color = Color.White
+                            )
                         }
                     }
                 }
-
-
-
-
             }
         }
     }
 }
 
+/* ---------------- HELPERS ---------------- */
 
-
-// ... (The rest of your code: WaterGlassesRow and TrackerCard are unchanged and correct) ...
 @Composable
 fun WaterGlassesRow(
     currentWater: Float,
@@ -221,18 +236,20 @@ fun WaterGlassesRow(
     glassSize: Float,
     onGlassClick: () -> Unit
 ) {
-    val totalGlasses = (waterGoal / glassSize).toInt()
-    val filledGlasses = (currentWater / glassSize).toInt()
+    val total = (waterGoal / glassSize).toInt()
+    val filled = (currentWater / glassSize).toInt()
 
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        repeat(totalGlasses) { index ->
-            val isFilled = index < filledGlasses
-
+        repeat(total) { index ->
             IconButton(onClick = onGlassClick) {
                 Icon(
-                    imageVector = if (isFilled) Icons.Filled.LocalDrink else Icons.Outlined.LocalDrink,
-                    contentDescription = "Glass of water",
-                    tint = if (isFilled) Color(0xFF007F7A) else Color.Gray,
+                    imageVector =
+                        if (index < filled) Icons.Filled.LocalDrink
+                        else Icons.Outlined.LocalDrink,
+                    contentDescription = "Water glass",
+                    tint =
+                        if (index < filled) Color(0xFF007F7A)
+                        else Color.Gray,
                     modifier = Modifier.size(40.dp)
                 )
             }
@@ -255,52 +272,40 @@ fun TrackerCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        elevation = CardDefaults.cardElevation(6.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
-            Text(goalText, style = MaterialTheme.typography.bodyMedium)
+            Text(title, fontWeight = FontWeight.SemiBold)
+            Text(goalText)
 
             LinearProgressIndicator(
-                progress = { progress.coerceIn(0f, 1f) },
+                progress = progress.coerceIn(0f, 1f),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(8.dp)
-                    .clip(RoundedCornerShape(4.dp)),
+                    .height(8.dp),
                 color = progressColor
             )
 
-            Text(
-                text = currentValueText,
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    color = progressColor,
-                    fontWeight = FontWeight.Medium
-                )
-            )
+            Text(currentValueText, color = progressColor)
 
             OutlinedTextField(
                 value = inputValue,
                 onValueChange = onInputChange,
                 label = { Text(inputLabel) },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                shape = RoundedCornerShape(10.dp)
+                singleLine = true
             )
 
             Button(
                 onClick = onButtonClick,
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = progressColor)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = progressColor
+                )
             ) {
                 Text(buttonLabel, color = Color.White)
             }
